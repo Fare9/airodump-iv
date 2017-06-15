@@ -15,6 +15,7 @@ from scapy.fields import LEFieldLenField
 from scapy.fields import LELongField
 from scapy.fields import LEShortField
 from scapy.fields import StrFixedLenField
+from scapy.fields import StrLenField
 from scapy.layers.dot11 import Dot11Elt
 from scapy.layers.dot11 import Dot11ProbeReq
 from scapy.packet import Packet
@@ -64,7 +65,7 @@ class PresentFlagField(ConditionalField):
 	"""Utility field for use by RadioTap"""
 	def __init__(self, field, flag_name):
 		ConditionalField.__init__(self, field, lambda pkt: pkt.hasflag('present', flag_name))
-
+'''
 
 # TODO(ivanlei): This fields_desc does not cover chained present flags decode will fail in this cases
 scapy.layers.dot11.RadioTap.name = '802.11 RadioTap'
@@ -105,7 +106,7 @@ def scapy_layers_dot11_RadioTap_extract_padding(self, s):
 	If all fields have been parsed, the payload length should have decreased RadioTap_len bytes
 	If it has not, there are unparsed fields which should be treated as padding
 	"""
-	padding = len(s) - (self.pre_dissect_len - self.RadioTap_len)
+	padding = len(s) - (self.pre_dissect_len - self.getfieldval('RadioTap_len'))
 	if padding:
 		return s[padding:], s[:padding]
 	else:
@@ -120,7 +121,7 @@ def scapy_layers_dot11_RadioTap_pre_dissect(self, s):
 	return s
 scapy.layers.dot11.RadioTap.pre_dissect = scapy_layers_dot11_RadioTap_pre_dissect
 del scapy_layers_dot11_RadioTap_pre_dissect
-
+'''
 
 class Dot11EltRates(Packet):
 	"""The rates member contains an array of supported rates"""
@@ -209,11 +210,13 @@ class Dot11EltRSN(Packet):
 		BitField('rsn_cap_reserved_1', 0, 1),
 		BitField('rsn_cap_peer_key_enabled', 0, 1),
 		BitField('rsn_cap_reserved_2', 0, 6),
+		StrFixedLenField('enc', '', length=10),
+		StrFixedLenField('cipher', '', length=10),
+		StrFixedLenField('auth', '', length=10),
 	]
 
 	def post_dissection(self, pkt):
 		"""Parse cipher suites to determine encryption, cipher, and authentication methods"""
-
 		self.enc = 'WPA2' # Everything is assumed to be WPA
 		self.cipher = ''
 		self.auth = ''
